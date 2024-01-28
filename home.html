@@ -5,22 +5,22 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Alan Wire - Cutting Stock</title>
-        <script src="cuttingStock.js"></script>
+        <script type="module" src="cuttingStock.js"></script>
+        <script type="module" src="bareForm.js"></script>
     </head>
-    <script>
-        let stockCuts = [500, 1000, 2500, 5000];
-        let bareLengths = [8100, 8100, 8100, 8100, 8100, 8100, 8100, 8100, 5400, 2300, 1100, 7800, 7700];
-        let requiredCuts = [
-            { length: 500, count: 6, priority: true },
-            { length: 1000, count: 3, priority: true },
-            { length: 2500, count: 2, priority: true },
-            { length: 545, count: 4, priority: true },
-            { length: 600, count: 3, priority: true }
-        ];
-        cuttingStock(stockCuts, bareLengths, requiredCuts);
-    </script>
+
 
     <body>
+
+        <form id="barLengthForm">
+            <label for="bareLengthInput">Bare Wire Available:</label><br>
+            <input type="number" id="bareLengthInput" min="1" step="1" value="" oninput="checkInput()">
+            <span id="multiplier">x 1</span>
+            <button type="button" onclick="incrementMultiple()">+</button>
+            <button type="button" onclick="decrementMultiple()">-</button>
+            <button type="button" id="addButton" onclick="addBareLength()" disabled>Add</button>
+        </form>
+        <table id="lengthTable"></table>
 
     </body>
 
