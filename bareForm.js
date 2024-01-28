@@ -1,4 +1,4 @@
-import { cuttingStock } from './cuttingStock.js';
+
 
 let stockCuts = [500, 1000, 2500, 5000];
 let bareLengths = [8000, 8000, 8000, 8000, 8000, 5600, 4100, 1800, 4000];
@@ -28,7 +28,12 @@ function highlight() {
 }
 
 function updateLength(index, value) {
-    bareLengths[index] = parseInt(value);
+    let parsedValue = parseInt(value);
+    if (isNaN(parsedValue)) {
+        alert("Invalid input. Please enter a number.");
+        return;
+    }
+    bareLengths[index] = parsedValue;
 }
 
 function removeBareLength(length) {
@@ -98,6 +103,7 @@ function displayLengths() {
         };
         addCell.appendChild(addButton);
     }
+    console.log(bareLengths);
 }
 
 let multiple = 1;
@@ -117,6 +123,10 @@ function decrementMultiple() {
 function addBareLength(length) {
     let input = document.getElementById('bareLengthInput');
     let lengthToAdd = length || parseInt(input.value);
+    if (isNaN(lengthToAdd)) {
+        alert("Invalid input. Please enter a number.");
+        return;
+    }
     for (let i = 0; i < multiple; i++) {
         bareLengths.push(lengthToAdd);
     }

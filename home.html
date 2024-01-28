@@ -4,23 +4,31 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Alan Wire - Cutting Stock</title>
-        <script type="module" src="cuttingStock.js"></script>
-        <script type="module" src="bareForm.js"></script>
+        <title>Alan Wire - Cut Sheet</title>
+        <script src="cuttingStock.js"></script>
     </head>
 
 
     <body>
+        <h1>Alan Wire - Cutting Stock Algorithm Testing</h1>
+        <hr>
+        <h4>Standard Cuts:</h4>
+        <table id="standardCutsTable"></table>
 
-        <form id="barLengthForm">
+        <hr>
+        <form id="bareLengthForm">
             <label for="bareLengthInput">Bare Wire Available:</label><br>
-            <input type="number" id="bareLengthInput" min="1" step="1" value="" oninput="checkInput()">
-            <span id="multiplier">x 1</span>
-            <button type="button" onclick="incrementMultiple()">+</button>
-            <button type="button" onclick="decrementMultiple()">-</button>
-            <button type="button" id="addButton" onclick="addBareLength()" disabled>Add</button>
+            <input type="number" id="bareLengthInput" min="1" step="1" value=""
+                oninput="checkInput('bareLengthInput', 'addBareButton' )">
+            <span id="bareMultiplier">x 1</span>
+            <button type="button" onclick="incrementMultiple('bareMultiplier')">+</button>
+            <button type="button" onclick="decrementMultiple('bareMultiplier')">-</button>
+            <button type="button" id="addBareButton" onclick="addBareLength()" disabled>Add</button>
         </form>
-        <table id="lengthTable"></table>
+        <table id="bareLengthTable"></table>
+
+        <hr>
+        <h4>Required Cuts:</h4>
 
     </body>
 
