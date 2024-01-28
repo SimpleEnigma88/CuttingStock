@@ -10,7 +10,7 @@
 
 
     <body>
-        <h1>Alan Wire - Cutting Stock Algorithm Testing</h1>
+        <h3>Alan Wire - Cutting Stock Algorithm Testing</h3>
         <hr>
         <h4>Standard Cuts:</h4>
         <table id="standardCutsTable"></table>
@@ -21,14 +21,30 @@
             <input type="number" id="bareLengthInput" min="1" step="1" value=""
                 oninput="checkInput('bareLengthInput', 'addBareButton' )">
             <span id="bareMultiplier">x 1</span>
-            <button type="button" onclick="incrementMultiple('bareMultiplier')">+</button>
-            <button type="button" onclick="decrementMultiple('bareMultiplier')">-</button>
+            <button type="button" onclick="incrementBareMultiple('bareMultiplier')">+</button>
+            <button type="button" onclick="decrementBareMultiple('bareMultiplier')">-</button>
             <button type="button" id="addBareButton" onclick="addBareLength()" disabled>Add</button>
         </form>
         <table id="bareLengthTable"></table>
 
         <hr>
         <h4>Required Cuts:</h4>
+
+        <form id="requiredCutsForm">
+            <label for="requiredCutsInput">Bare Wire Available:</label><br>
+            <input type="number" id="requiredCutsInput" min="1" step="1" value=""
+                oninput="checkInput('requiredCutsInput', 'addRequiredButton' )">
+            <span id="requiredMuliplier">x 1</span>
+            <button type="button" onclick="incrementRequiredMultiple('requiredMuliplier')">+</button>
+            <button type="button" onclick="decrementRequiredMultiple('requiredMuliplier')">-</button>
+            <button type="button" id="addRequiredButton"
+                onclick="addRequiredCut()"
+                disabled>Add</button>
+        </form>
+        <table id="requiredCutsTable"></table>
+
+        <hr>
+
 
     </body>
 

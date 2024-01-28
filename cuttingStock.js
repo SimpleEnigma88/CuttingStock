@@ -1,4 +1,4 @@
-// Cutting stock algoritm - Greedy algorithm;
+// Cutting stock algorithm - Greedy algorithm;
 
 // Requirements:
 
@@ -16,6 +16,13 @@
 // The algorithm should aim to minimize waste and fully utilized the bareLengths into requiredCuts first, then stockCuts if needed to finish the bareLength.;
 
 // lengths in requiredCuts that do not match stockCuts lengths will have a higher priority than the ones that match stockCuts.
+
+// ToDos:
+// Decide what happens when the requiredCuts cannot be satisfied by the bareLengths.
+//
+//
+//
+//
 
 function cuttingStock(standardCuts, bareLengths, requiredCuts, wasteLimit = 125) {
     let oddLengths = [];
@@ -82,13 +89,38 @@ function cuttingStock(standardCuts, bareLengths, requiredCuts, wasteLimit = 125)
 let importedStandardCuts = [500, 1000, 2500, 5000]; // Populated from the database eventually
 let standardCuts = [];
 let bareLengths = [8000, 8000, 8000, 8000, 8000, 5600, 4100, 1800, 4000]; // Populated from the database eventually
-let requiredCuts = [
-    { length: 500, count: 6, priority: true },
-    { length: 1000, count: 3, priority: true },
-    { length: 2500, count: 2, priority: true },
-    { length: 545, count: 4, priority: true },
-    { length: 600, count: 3, priority: true }
-]; // Populated from the database eventually
+
+
+function displayStandardCuts() {
+    let table = document.getElementById('standardCutsTable');
+    let row = table.insertRow();
+    for (let i = 0; i < importedStandardCuts.length; i++) {
+        let cell = row.insertCell();
+        let checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = 'checkbox' + i;
+        checkbox.checked = true; // All checkboxes are checked by default
+        checkbox.onchange = function () {
+            if (this.checked) {
+                standardCuts.push(importedStandardCuts[i]);
+            } else {
+                let index = standardCuts.indexOf(importedStandardCuts[i]);
+                if (index !== -1) {
+                    standardCuts.splice(index, 1);
+                }
+            }
+            standardCuts.sort((a, b) => b - a); // sort standardCuts in descending order
+            console.log('standard Cuts: ', standardCuts);
+        };
+        cell.appendChild(checkbox);
+        let textNode = document.createTextNode(' ' + importedStandardCuts[i]);
+        cell.appendChild(textNode);
+    }
+    // Add all values to standardCuts after the checkboxes have been created and checked
+    for (let i = 0; i < importedStandardCuts.length; i++) {
+        standardCuts.push(importedStandardCuts[i]);
+    }
+}
 
 function removeBareLength(length) {
     let index = bareLengths.indexOf(parseInt(length));
@@ -105,20 +137,113 @@ function addBareLength(length) {
         alert("Invalid input. Please enter a number.");
         return;
     }
-    for (let i = 0; i < multiple; i++) {
+    for (let i = 0; i < bareMultiple; i++) {
         bareLengths.push(lengthToAdd);
     }
     input.value = '';
-    multiple = 1;
-    document.getElementById('bareMultiplier').textContent = 'x ' + multiple;
+    bareMultiple = 1;
+    document.getElementById('bareMultiplier').textContent = 'x ' + bareMultiple;
     displayBareLengths();
+}
+
+function removeRequiredCut(length) {
+    let index = requiredCuts.findIndex(cut => cut.length === length);
+    if (index !== -1) {
+        if (requiredCuts[index].count > 1) {
+            requiredCuts[index].count--;
+        } else {
+            requiredCuts.splice(index, 1);
+        }
+    }
+    displayRequiredCuts();
+}
+
+function addRequiredCut(lengthToAdd) {
+    console.log('addRequiredCut called');
+    lengthToAdd = lengthToAdd || parseInt(document.getElementById('requiredCutsInput').value);
+    if (isNaN(lengthToAdd)) {
+        alert("Invalid input. Please enter a number.");
+        return;
+    }
+    let existingCut = requiredCuts.find(cut => cut.length === lengthToAdd);
+    if (existingCut) {
+        existingCut.count += requiredMultiple;
+    } else {
+        requiredCuts.push({ length: lengthToAdd, count: requiredMultiple, priority: true });
+    }
+
+    document.getElementById('requiredCutsInput').value = '';
+    requiredMultiple = 1;
+    document.getElementById('requiredMuliplier').textContent = 'x ' + requiredMultiple;
+    displayRequiredCuts();
+}
+
+let requiredCuts = [
+    { length: 500, count: 6, priority: true },
+    { length: 1000, count: 3, priority: true },
+    { length: 2500, count: 2, priority: true },
+    { length: 545, count: 4, priority: true },
+    { length: 600, count: 3, priority: true }
+]; // Populated from the database eventually
+
+function displayRequiredCuts() {
+    console.log('Required Cuts: ', requiredCuts);
+    let table = document.getElementById('requiredCutsTable');
+    table.innerHTML = '';
+
+    for (let cut of requiredCuts) {
+        let row = table.insertRow();
+
+        // Create a cell for the length
+        let lengthCell = row.insertCell();
+        lengthCell.innerHTML = cut.length;
+        lengthCell.contentEditable = true;
+        lengthCell.style.width = '4rem';
+        lengthCell.style.textAlign = 'left';
+        lengthCell.style.border = '1px solid black';
+        lengthCell.onblur = function () {
+            let newLength = this.innerHTML;
+            let index = requiredCuts.findIndex(c => c.length === parseInt(cut.length));
+            if (index !== -1) {
+                requiredCuts[index].length = parseInt(newLength);
+            }
+        };
+        lengthCell.onkeypress = function (e) {
+            let char = String.fromCharCode(e.which);
+            if (!/[0-9]/.test(char)) {
+                e.preventDefault();
+            }
+        };
+
+        // Create a cell for the multiple indicator
+        let multipleCell = row.insertCell();
+        multipleCell.style.minWidth = '2 rem';
+        multipleCell.innerHTML = 'x' + cut.count;
+
+        // Create a cell for the delete button
+        let deleteCell = row.insertCell();
+        let deleteButton = document.createElement('button');
+        deleteButton.textContent = '-';
+        deleteButton.onclick = function () { removeRequiredCut(cut.length); };
+        deleteCell.appendChild(deleteButton);
+
+        // Create a cell for the add button
+        let addCell = row.insertCell();
+        let addButton = document.createElement('button');
+        addButton.textContent = '+';
+        addButton.onclick = function () {
+            let lengthToAdd = parseInt(lengthCell.innerHTML); // get the length from the length cell
+            addRequiredCut(lengthToAdd); // add the length
+        };
+        addCell.appendChild(addButton);
+    }
 }
 
 function displayBareLengths() {
     let table = document.getElementById('bareLengthTable');
     table.innerHTML = '';
 
-    let counts = bareLengths.reduce((acc, val) => {
+    let counts = bareLengths.reduce((acc, val) => { // count the number of each length
         acc[val] = (acc[val] || 0) + 1;
         return acc;
     }, {});
@@ -174,48 +299,33 @@ function displayBareLengths() {
     console.log("Standard Cuts: ", standardCuts);
 }
 
-function displayStandardCuts() {
-    let table = document.getElementById('standardCutsTable');
-    let row = table.insertRow();
-    for (let i = 0; i < importedStandardCuts.length; i++) {
-        let cell = row.insertCell();
-        let checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.id = 'checkbox' + i;
-        checkbox.checked = true; // All checkboxes are checked by default
-        checkbox.onchange = function () {
-            if (this.checked) {
-                standardCuts.push(importedStandardCuts[i]);
-            } else {
-                let index = standardCuts.indexOf(importedStandardCuts[i]);
-                if (index !== -1) {
-                    standardCuts.splice(index, 1);
-                }
-            }
-            standardCuts.sort((a, b) => b - a); // sort standardCuts in descending order
-            console.log('standard Cuts: ', standardCuts);
-        };
-        cell.appendChild(checkbox);
-        let textNode = document.createTextNode(' ' + importedStandardCuts[i]);
-        cell.appendChild(textNode);
-    }
-    // Add all values to standardCuts after the checkboxes have been created and checked
-    for (let i = 0; i < importedStandardCuts.length; i++) {
-        standardCuts.push(importedStandardCuts[i]);
+
+
+let bareMultiple = 1;
+
+function incrementBareMultiple(eleID) {
+    bareMultiple++;
+    document.getElementById(eleID).textContent = 'x ' + bareMultiple;
+}
+
+function decrementBareMultiple(eleID) {
+    if (bareMultiple > 1) {
+        bareMultiple--;
+        document.getElementById(eleID).textContent = 'x ' + bareMultiple;
     }
 }
 
-let multiple = 1;
+let requiredMultiple = 1;
 
-function incrementMultiple(eleID) {
-    multiple++;
-    document.getElementById(eleID).textContent = 'x ' + multiple;
+function incrementRequiredMultiple(eleID) {
+    requiredMultiple++;
+    document.getElementById(eleID).textContent = 'x ' + requiredMultiple;
 }
 
-function decrementMultiple(eleID) {
-    if (multiple > 1) {
-        multiple--;
-        document.getElementById(eleID).textContent = 'x ' + multiple;
+function decrementRequiredMultiple(eleID) {
+    if (requiredMultiple > 1) {
+        requiredMultiple--;
+        document.getElementById(eleID).textContent = 'x ' + requiredMultiple;
     }
 }
 
@@ -228,5 +338,6 @@ function checkInput(inputID, buttonID) {
 window.onload = function () {
     displayStandardCuts();
     displayBareLengths();
+    displayRequiredCuts();
 };
 
