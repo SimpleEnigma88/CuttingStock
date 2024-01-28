@@ -24,19 +24,22 @@
 //
 //
 
+// Testing inputs
+let importedStandardCuts = [500, 1000, 2500, 5000]; // Populated from the database eventually
+let standardCuts = [...importedStandardCuts]; // Use a copy to avoid modifying the imported array
+let bareLengths = [8000, 8000, 8000, 8000, 8000, 5600, 4100, 1800, 4000]; // Populated from the database eventually
+let requiredCuts = [500, 500, 500, 500, 500, 500, 1000, 1000, 1000, 1000, 2500, 2500, 2500, 5000, 5000, 5000, 545, 545, 545, 545, 545, 725, 725, 725]; // Populated from the database eventually
+
 function cuttingStock(standardCuts, bareLengths, requiredCuts, wasteLimit = 125) {
-    let oddLengths = [];
+    let oddLength = 0;
     let results = [];
     let unusedBareLengths = [...bareLengths]; // Create a copy of bareLengths to keep track of used bareLengths
 
-    bareLengths.sort((a, b) => b - a);
+    bareLengths.sort((a, b) => a - b); // sort bareLengths in ascending order
 
-    requiredCuts.sort((a, b) => {
-        if (a.priority !== b.priority) { // sort requiredCuts by priority, else sort by length
-            return a.priority ? -1 : 1;
-        }
-        return b.length - a.length;
-    });
+    requiredCuts = requiredCuts.map(length => ({ length, count: 1 })); // Convert requiredCuts to an array of objects with a count property
+
+    requiredCuts.sort((a, b) => b.length - a.length);
 
     standardCuts.sort((a, b) => b - a); // sort standardCuts in descending order
 
@@ -50,45 +53,44 @@ function cuttingStock(standardCuts, bareLengths, requiredCuts, wasteLimit = 125)
         let remainder = bareLength;
         let cutsMade = [];
 
-        for (let requiredCut of requiredCuts) {
-            while (remainder >= requiredCut.length && requiredCut.count > 0) { // cut the bareLength into the requiredCuts
-                remainder -= requiredCut.length; // update remainder
+        for (let i = 0; i < requiredCuts.length; i++) {
+            let requiredCut = requiredCuts[i];
+            while (remainder >= requiredCut.length && requiredCut.count > 0) {
+                remainder -= requiredCut.length;
                 requiredCut.count--;
-                cutsMade.push(requiredCut.length); // add the cut to cutsMade
-                if (requiredCut.count == 0) { // if all required cuts are satisfied
-                    break;
-                }
+                cutsMade.push(requiredCut.length);
+            }
+            if (requiredCut.count === 0) {
+                requiredCuts.splice(i, 1); // Remove the satisfied requiredCut
+                i--; // Adjust the index after removing an element
             }
         }
+
         // cut the remainder into the longest standardCuts if no requiredCut fits
-        for (let standardCut of standardCuts) { // cut the remainder into standardCuts
+        for (let i = 0; i < standardCuts.length; i++) {
+            let standardCut = standardCuts[i];
             while (remainder >= standardCut) {
                 remainder -= standardCut;
                 cutsMade.push(standardCut);
             }
         }
+
         if (remainder >= wasteLimit && remainder < Math.min(...standardCuts)) { // if the remainder is not a standardCut and is greater than the wasteLimit
-            oddLengths.push(remainder);
+            oddLength = remainder;
         }
 
         let scrap = remainder < wasteLimit ? remainder : 0; // if the remainder is less than the wasteLimit, it is scrap
-        results.push({ bareLength, cutsMade, scrap, remainder });
+        results.push({ bareLength, cutsMade, scrap, oddLength });
 
         // Check if all required cuts are satisfied
         if (requiredCuts.every(cut => cut.count === 0)) {
             break; // Stop cutting up bareLengths
         }
     }
-
-    console.log(results, oddLengths, unusedBareLengths);
-    return { results, oddLengths, unusedBareLengths };
+    return { results, oddLength, unusedBareLengths, requiredCuts };
 }
 
-
-//Testing inputs
-let importedStandardCuts = [500, 1000, 2500, 5000]; // Populated from the database eventually
-let standardCuts = [];
-let bareLengths = [8000, 8000, 8000, 8000, 8000, 5600, 4100, 1800, 4000]; // Populated from the database eventually
+cuttingStock(standardCuts, bareLengths, requiredCuts);
 
 
 function displayStandardCuts() {
@@ -146,18 +148,6 @@ function addBareLength(length) {
     displayBareLengths();
 }
 
-function removeRequiredCut(length) {
-    let index = requiredCuts.findIndex(cut => cut.length === length);
-    if (index !== -1) {
-        if (requiredCuts[index].count > 1) {
-            requiredCuts[index].count--;
-        } else {
-            requiredCuts.splice(index, 1);
-        }
-    }
-    displayRequiredCuts();
-}
-
 function addRequiredCut(lengthToAdd) {
     console.log('addRequiredCut called');
     lengthToAdd = lengthToAdd || parseInt(document.getElementById('requiredCutsInput').value);
@@ -165,77 +155,61 @@ function addRequiredCut(lengthToAdd) {
         alert("Invalid input. Please enter a number.");
         return;
     }
-    let existingCut = requiredCuts.find(cut => cut.length === lengthToAdd);
-    if (existingCut) {
-        existingCut.count += requiredMultiple;
-    } else {
-        requiredCuts.push({ length: lengthToAdd, count: requiredMultiple, priority: true });
-    }
-
+    requiredCuts.push(lengthToAdd);
     document.getElementById('requiredCutsInput').value = '';
-    requiredMultiple = 1;
-    document.getElementById('requiredMuliplier').textContent = 'x ' + requiredMultiple;
     displayRequiredCuts();
 }
 
-let requiredCuts = [
-    { length: 500, count: 6, priority: true },
-    { length: 1000, count: 3, priority: true },
-    { length: 2500, count: 2, priority: true },
-    { length: 545, count: 4, priority: true },
-    { length: 600, count: 3, priority: true }
-]; // Populated from the database eventually
+function removeRequiredCut(length) {
+    console.log('top of remove Required Cuts: ', requiredCuts);
+    console.log('removeRequiredCut called with length:', length);
+    length = parseInt(length);
+    let index = requiredCuts.indexOf(length);
+    if (index !== -1) {
+        requiredCuts.splice(index, 1);
+    }
+    displayRequiredCuts();
+}
 
 function displayRequiredCuts() {
-    console.log('Required Cuts: ', requiredCuts);
     let table = document.getElementById('requiredCutsTable');
-    table.innerHTML = '';
+    table.innerHTML = ''; // clear the existing table
 
-    for (let cut of requiredCuts) {
+    // Reduce the array to get the count of each length
+    let counts = requiredCuts.reduce((acc, length) => {
+        acc[length] = (acc[length] || 0) + 1;
+        return acc;
+    }, {});
+
+    // Display each length and its count
+    for (let length in counts) {
         let row = table.insertRow();
 
-        // Create a cell for the length
+        // Display the length
         let lengthCell = row.insertCell();
-        lengthCell.innerHTML = cut.length;
-        lengthCell.contentEditable = true;
-        lengthCell.style.width = '4rem';
-        lengthCell.style.textAlign = 'left';
-        lengthCell.style.border = '1px solid black';
-        lengthCell.onblur = function () {
-            let newLength = this.innerHTML;
-            let index = requiredCuts.findIndex(c => c.length === parseInt(cut.length));
-            if (index !== -1) {
-                requiredCuts[index].length = parseInt(newLength);
-            }
-        };
-        lengthCell.onkeypress = function (e) {
-            let char = String.fromCharCode(e.which);
-            if (!/[0-9]/.test(char)) {
-                e.preventDefault();
-            }
-        };
+        lengthCell.textContent = length;
 
-        // Create a cell for the multiple indicator
-        let multipleCell = row.insertCell();
-        multipleCell.style.minWidth = '2 rem';
-        multipleCell.innerHTML = 'x' + cut.count;
+        // Display the count
+        let countCell = row.insertCell();
+        countCell.textContent = 'x ' + counts[length];
 
-        // Create a cell for the delete button
+        // Add a delete button
         let deleteCell = row.insertCell();
         let deleteButton = document.createElement('button');
         deleteButton.textContent = '-';
-        deleteButton.onclick = function () { removeRequiredCut(cut.length); };
+        deleteButton.onclick = function () {
+            removeRequiredCut(parseInt(length));
+        };
         deleteCell.appendChild(deleteButton);
 
-        // Create a cell for the add button
-        let addCell = row.insertCell();
-        let addButton = document.createElement('button');
-        addButton.textContent = '+';
-        addButton.onclick = function () {
-            let lengthToAdd = parseInt(lengthCell.innerHTML); // get the length from the length cell
-            addRequiredCut(lengthToAdd); // add the length
+        // Add an increase button
+        let increaseCell = row.insertCell();
+        let increaseButton = document.createElement('button');
+        increaseButton.textContent = '+';
+        increaseButton.onclick = function () {
+            addRequiredCut(parseInt(length));
         };
-        addCell.appendChild(addButton);
+        increaseCell.appendChild(increaseButton);
     }
 }
 
@@ -299,8 +273,6 @@ function displayBareLengths() {
     console.log("Standard Cuts: ", standardCuts);
 }
 
-
-
 let bareMultiple = 1;
 
 function incrementBareMultiple(eleID) {
@@ -339,5 +311,28 @@ window.onload = function () {
     displayStandardCuts();
     displayBareLengths();
     displayRequiredCuts();
+
+    document.getElementById('runButton').addEventListener('click', function () {
+        let table = document.getElementById('resultsTable');
+        table.innerHTML = ''; // clear the table
+
+        let { results } = cuttingStock(standardCuts, bareLengths, requiredCuts); // run the cuttingStock function
+
+        for (let result of results) {
+            let row = table.insertRow();
+
+            let bareLengthCell = row.insertCell();
+            bareLengthCell.textContent = 'Bare reel used: ' + result.bareLength + ' | ';
+
+            let cutsMadeCell = row.insertCell();
+            cutsMadeCell.textContent = 'Cuts: ' + result.cutsMade.join(', ') + ' | ';
+
+            let scrapCell = row.insertCell();
+            scrapCell.textContent = 'Scrap: ' + result.scrap + ' | ';
+
+            let remainderCell = row.insertCell();
+            remainderCell.textContent = 'Odd Length: ' + result.oddLength;
+        }
+    });
 };
 
